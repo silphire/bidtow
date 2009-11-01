@@ -35,7 +35,7 @@
 
 const TCHAR *appClassName = _T("bidtow");
 static UINT s_TaskbarRestartMessage;
-static HWND s_hMainDialog;
+static HWND s_hMainDialog, s_hHiddenWindow;
 
 static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
 {
@@ -61,7 +61,7 @@ static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
 				break;
 		} else {
 			// something error occured, but not processed specially.
-			return FALSE;
+			return err == ERROR_SUCCESS;
 		}
 	}
 
@@ -87,6 +87,29 @@ static BOOL RemoveIconFromTaskbar(void)
 //
 //
 //
+static BOOL ShowBidtowWindow(void)
+{
+	//LONG style = GetWindowLong(s_hHiddenWindow, GWL_STYLE);
+	//SetWindowLong(s_hHiddenWindow, GWL_STYLE, style | WS_VISIBLE);
+	ShowWindow(s_hMainDialog, SW_SHOW);
+	return RemoveIconFromTaskbar();
+}
+
+//
+//
+//
+static BOOL HideBidtowWindow(void)
+{
+	//LONG style = GetWindowLong(s_hHiddenWindow, GWL_STYLE);
+	//SetWindowLong(s_hHiddenWindow, GWL_STYLE, style & ~WS_VISIBLE);
+	//CloseWindow(s_hMainDialog);
+	ShowWindow(s_hMainDialog, SW_HIDE);
+	return AddIconToTaskbar();
+}
+
+//
+//
+//
 static void TerminateApplication(void)
 {
 	RemoveIconFromTaskbar();
@@ -99,7 +122,7 @@ static void TerminateApplication(void)
 //
 static BOOL CALLBACK OnInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	BYTE *buffer;
+	BYTE *buffer = NULL;
 	RAWINPUT *raw = (RAWINPUT *)buffer;
 	UINT dwSize, dwGetSize;
 
@@ -138,6 +161,16 @@ static BOOL CALLBACK MainDialogProc(HWND hDialog, UINT msg, WPARAM wParam, LPARA
 			return TRUE;
 		}
 
+		case WM_SYSCOMMAND: {
+			if(wParam == SC_CLOSE) {
+				//ShowWindow(s_hMainDialog, SW_MINIMIZE);
+				HideBidtowWindow();
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+		}
+
 		case WM_COMMAND:
 			switch(LOWORD(wParam)) {
 			case IDOK:
@@ -167,9 +200,10 @@ static BOOL CALLBACK MainDialogProc(HWND hDialog, UINT msg, WPARAM wParam, LPARA
 		}
 
 		case WM_NOTIFYREGION:
-			if(lParam == WM_LBUTTONDOWN) {
-				MessageBox(NULL, _T("Left Button Clicked"), _T("WM_NOTIFYREGION"), MB_OK);
+			if(lParam == WM_LBUTTONDBLCLK) {
+				ShowBidtowWindow();
 			} else if(lParam == WM_RBUTTONUP) {
+				// show context menu
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				UINT flag = 0;
 				POINT pt;
@@ -226,7 +260,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MSG msg;
 	RAWINPUTDEVICE devs[2];
 	BOOL bResult;
-	RAWINPUTDEVICE x;
 
 	// register window class
 	ZeroMemory(&wndClass, sizeof(wndClass));
@@ -235,24 +268,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wndClass.hInstance = hInstance;
 	wndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wndClass.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_ICON_BIDTOW));
-	wndClass.hCursor = LoadIcon(NULL, IDI_APPLICATION);
+	wndClass.hCursor = LoadCursor(NULL, IDI_APPLICATION);
 	wndClass.lpszClassName = appClassName;
 	wndClass.lpfnWndProc = MainWndProc;
 	if(!RegisterClassEx(&wndClass)) {
 		return 0;
 	}
 
+	// create dummy hidden window
+	s_hHiddenWindow = CreateWindow(
+		appClassName, _T(""), 
+		WS_OVERLAPPEDWINDOW	& ~WS_VISIBLE, 
+		CW_USEDEFAULT, CW_USEDEFAULT, 
+		CW_USEDEFAULT, CW_USEDEFAULT, 
+		HWND_DESKTOP, 
+		NULL, 
+		hInstance, 
+		0);
+	if(!s_hHiddenWindow)
+		return 0;
+
 	// create dialog
-	s_hMainDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAINDIALOG), NULL, MainDialogProc);
+	s_hMainDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAINDIALOG), s_hHiddenWindow, MainDialogProc);
 	if(!s_hMainDialog)
 		return 0;
-	ShowWindow(s_hMainDialog, SW_SHOW);
-	UpdateWindow(s_hMainDialog);
-
-	if(!AddIconToTaskbar()) {
+	if(!ShowBidtowWindow()) {
 		CloseWindow(s_hMainDialog);
 		return 0;
 	}
+	UpdateWindow(s_hMainDialog);
 
 	// hook keyboard and mouse control
 	ZeroMemory(devs, sizeof(devs));
