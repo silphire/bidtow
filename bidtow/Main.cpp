@@ -14,7 +14,10 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <vector>
 #include "resource.h"
+
+#include "InputDevice.h"
 
 #ifndef ASSERT
 #if defined(_DEBUG) || defined(DEBUG)
@@ -95,11 +98,30 @@ static void TerminateApplication(void)
 }
 
 //
+//
+//
+void GetCurrentAvailableInputDevicesName()
+{
+	RAWINPUTDEVICELIST *devices;
+	UINT i, nDevice;
+
+	GetRawInputDeviceList(NULL, &nDevice, sizeof(RAWINPUTDEVICELIST));
+	devices = new RAWINPUTDEVICELIST[nDevice];
+	GetRawInputDeviceList(devices, &nDevice, sizeof(RAWINPUTDEVICELIST));
+
+	for(i = 0; i < nDevice; ++i) {
+		if(devices[i].dwType == RIM_TYPEKEYBOARD || devices[i].dwType == RIM_TYPEMOUSE) {
+			InputDevice *devobj = new InputDevice();
+		}
+	}
+}
+
+//
 // process WM_INPUT
 //
 static BOOL CALLBACK OnInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	BYTE *buffer;
+	BYTE *buffer = NULL;
 	RAWINPUT *raw = (RAWINPUT *)buffer;
 	UINT dwSize, dwGetSize;
 
@@ -226,7 +248,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MSG msg;
 	RAWINPUTDEVICE devs[2];
 	BOOL bResult;
-	RAWINPUTDEVICE x;
 
 	// register window class
 	ZeroMemory(&wndClass, sizeof(wndClass));
