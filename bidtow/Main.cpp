@@ -17,6 +17,7 @@
 #include <vector>
 #include "resource.h"
 
+#include "InputDeviceManager
 #include "InputDevice.h"
 
 #ifndef ASSERT
@@ -39,6 +40,7 @@
 const TCHAR *appClassName = _T("bidtow");
 static UINT s_TaskbarRestartMessage;
 static HWND s_hMainDialog, s_hHiddenWindow;
+static InputDeviceManager theManager;
 
 static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
 {
