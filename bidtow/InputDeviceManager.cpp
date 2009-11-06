@@ -17,7 +17,7 @@ BOOL InputDeviceManager::PassInputMessage(HWND hWnd, UINT msg, WPARAM wParam, LP
 	
 	for(it = devices.begin(); it != devices.end(); ++it) {
 		if(it->IsBindedToWindow(hWnd) && it->IsDeviceTypeOf(raw->header.dwType)) {
-			ret &&= it->ProcessMessage(hWnd, msg, wParam, lParam);
+			ret = ret && it->ProcessMessage(hWnd, msg, wParam, lParam);
 		}
 	}
 

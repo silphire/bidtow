@@ -17,7 +17,7 @@
 #include <vector>
 #include "resource.h"
 
-#include "InputDeviceManager
+#include "InputDeviceManager.h"
 #include "InputDevice.h"
 
 #ifndef ASSERT
