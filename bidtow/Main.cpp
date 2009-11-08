@@ -20,19 +20,6 @@
 #include "InputDeviceManager.h"
 #include "InputDevice.h"
 
-#ifndef ASSERT
-#if defined(_DEBUG) || defined(DEBUG)
-#define STRINGNIZE(x) #x
-#define ASSERT(x) \
-	if(!(x)) { \
-	OutputDebugString(_T("Assertion Failed! at ") _T(__FILE__) _T(STRINGNIZE(__LINE__)) _T("\n")); \
-		DebugBreak(); \
-	}
-#else
-#define ASSERT(x)
-#endif
-#endif
-
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
 #define WM_NOTIFYREGION (WM_USER + 1)
@@ -137,30 +124,6 @@ void GetCurrentAvailableInputDevicesName()
 }
 
 //
-// process WM_INPUT
-//
-static BOOL CALLBACK OnInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	BYTE *buffer = NULL;
-	RAWINPUT *raw = (RAWINPUT *)buffer;
-	UINT dwSize, dwGetSize;
-
-	GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
-	buffer = new BYTE[dwSize];
-	if(buffer == NULL)
-		return FALSE;
-	dwGetSize = GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &dwSize, sizeof(RAWINPUTHEADER));
-	ASSERT(dwGetSize == dwSize);
-
-	if(raw->header.dwType == RIM_TYPEKEYBOARD) {
-	} else if(raw->header.dwType == RIM_TYPEMOUSE) {
-	}
-
-	delete[] buffer;
-	return TRUE;
-}
-
-//
 // 
 //
 static BOOL CALLBACK MainDialogProc(HWND hDialog, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -237,7 +200,7 @@ static BOOL CALLBACK MainDialogProc(HWND hDialog, UINT msg, WPARAM wParam, LPARA
 			return TRUE;
 
 		case WM_INPUT:
-			return OnInput(hDialog, msg, wParam, lParam);
+			return theManager.PassInputMessage(hDialog, msg, wParam, lParam);
 
 		default:
 			return FALSE;
