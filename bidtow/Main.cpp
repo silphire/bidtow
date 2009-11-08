@@ -39,7 +39,7 @@
 
 const TCHAR *appClassName = _T("bidtow");
 static UINT s_TaskbarRestartMessage;
-static HWND s_hMainDialog, s_hHiddenWindow;
+static HWND s_hMainDialog;
 static InputDeviceManager theManager;
 
 static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
@@ -94,8 +94,6 @@ static BOOL RemoveIconFromTaskbar(void)
 //
 static BOOL ShowBidtowWindow(void)
 {
-	//LONG style = GetWindowLong(s_hHiddenWindow, GWL_STYLE);
-	//SetWindowLong(s_hHiddenWindow, GWL_STYLE, style | WS_VISIBLE);
 	ShowWindow(s_hMainDialog, SW_SHOW);
 	return RemoveIconFromTaskbar();
 }
@@ -105,9 +103,6 @@ static BOOL ShowBidtowWindow(void)
 //
 static BOOL HideBidtowWindow(void)
 {
-	//LONG style = GetWindowLong(s_hHiddenWindow, GWL_STYLE);
-	//SetWindowLong(s_hHiddenWindow, GWL_STYLE, style & ~WS_VISIBLE);
-	//CloseWindow(s_hMainDialog);
 	ShowWindow(s_hMainDialog, SW_HIDE);
 	return AddIconToTaskbar();
 }
@@ -299,21 +294,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	// create dummy hidden window
-	s_hHiddenWindow = CreateWindow(
-		appClassName, _T(""), 
-		WS_OVERLAPPEDWINDOW	& ~WS_VISIBLE, 
-		CW_USEDEFAULT, CW_USEDEFAULT, 
-		CW_USEDEFAULT, CW_USEDEFAULT, 
-		HWND_DESKTOP, 
-		NULL, 
-		hInstance, 
-		0);
-	if(!s_hHiddenWindow)
-		return 0;
-
 	// create dialog
-	s_hMainDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAINDIALOG), s_hHiddenWindow, MainDialogProc);
+	s_hMainDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAINDIALOG), NULL, MainDialogProc);
 	if(!s_hMainDialog)
 		return 0;
 	if(!ShowBidtowWindow()) {
