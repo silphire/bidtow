@@ -44,9 +44,10 @@
 
 CAppModule _Module;
 
-class CMainDialog : public CDialogImpl<CMainDialog> {
+//class CMainDialog : public CDialogImpl<CMainDialog> {
+class CMainDialog : public CPropertySheetImpl<CMainDialog> {
 public:
-	enum { IDD = IDD_MAINDIALOG };
+	// enum { IDD = IDD_MAINDIALOG };
 
 	BEGIN_MSG_MAP_EX(CMainDialog)
 		MSG_WM_INITDIALOG(OnInitDialog)
@@ -265,19 +266,6 @@ LRESULT CMainDialog::OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
 	HideBidtowWindow();
 	return TRUE;
-}
-
-//
-// window procedure for message loop dispatched at WinMain()
-//
-static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch(msg) {
-		case WM_CREATE:
-			break;
-	}
-
-	return 0L;
 }
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nShowCmd)
