@@ -1,2 +1,7 @@
 /wtl/Include/
+Debug/
+Release/
+bidtow.ncb
+bidtow.suo
+*.user
 
