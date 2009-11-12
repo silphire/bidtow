@@ -23,13 +23,77 @@
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
 #define WM_NOTIFYREGION (WM_USER + 1)
+#define MSG_WM_NOTIFYREGION(func) \
+	if(uMsg == WM_NOTIFYREGION) { \
+		SetMsgHandled(TRUE); \
+		lResult = 0; \
+		func(wParam, lParam); \
+		if(IsMsgHandled()) \
+			return TRUE; \
+	}
+
+#define SYSCOMMAND_ID_HANDLER_EX(id, func) \
+	if (uMsg == WM_SYSCOMMAND && id == LOWORD(wParam)) \
+	{ \
+		SetMsgHandled(TRUE); \
+		func((UINT)HIWORD(wParam), (int)LOWORD(wParam), (HWND)lParam); \
+		lResult = 0; \
+		if(IsMsgHandled()) \
+			return TRUE; \
+	}
+
+CAppModule _Module;
+
+class CMainDialog : public CDialogImpl<CMainDialog> {
+public:
+	enum { IDD = IDD_MAINDIALOG };
+
+	BEGIN_MSG_MAP_EX(CMainDialog)
+		MSG_WM_INITDIALOG(OnInitDialog)
+		MSG_WM_CLOSE(OnClose)
+		MSG_WM_DESTROY(OnDestroy)
+		MSG_WM_INPUT(OnInput)
+		MSG_WM_NOTIFYREGION(OnNotifyRegion)
+		MESSAGE_HANDLER_EX(TaskbarRestartMessage, OnTaskbarRestart)
+		COMMAND_ID_HANDLER_EX(IDOK, OnOK)
+		COMMAND_ID_HANDLER_EX(ID_BIND, OnBind)
+		COMMAND_ID_HANDLER_EX(ID_CONFIG, OnConfig)
+		COMMAND_ID_HANDLER_EX(ID_STATUS, OnStatus)
+		COMMAND_ID_HANDLER_EX(ID_ABOUT, OnAbout)
+		COMMAND_ID_HANDLER_EX(ID_EXIT, OnExit)
+		SYSCOMMAND_ID_HANDLER_EX(SC_CLOSE, OnSysClose)
+	END_MSG_MAP()
+
+	BOOL ShowBidtowWindow(void);
+	BOOL HideBidtowWindow(void);
+
+private:
+	UINT TaskbarRestartMessage;
+	CMenu TrayMenu;
+	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
+	BOOL AddIconToTaskbar(void);
+	BOOL RemoveIconFromTaskbar(void);
+
+protected:
+	LRESULT OnInitDialog(HWND hWnd, LPARAM lParam);
+	void OnClose(void);
+	void OnDestroy(void);
+	void OnInput(WPARAM code, HRAWINPUT hRawInput);
+	void OnNotifyRegion(WPARAM wParam, LPARAM lParam);
+	LRESULT OnTaskbarRestart(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnConfig(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnStatus(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnAbout(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnExit(UINT uNotifyCode, int nID, HWND hWndCtrl);
+	LRESULT OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl);
+};
 
 const TCHAR *appClassName = _T("bidtow");
-static UINT s_TaskbarRestartMessage;
-static HWND s_hMainDialog;
 static InputDeviceManager theManager;
 
-static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
+BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
 {
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	NOTIFYICONDATA notifyIcon;
@@ -37,11 +101,11 @@ static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
 	// append icon to notification region
 	ZeroMemory(&notifyIcon, sizeof(notifyIcon));
 	notifyIcon.cbSize = sizeof(notifyIcon);
-	notifyIcon.hWnd = s_hMainDialog;
+	notifyIcon.hWnd = this->m_hWnd;
 	notifyIcon.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	notifyIcon.uCallbackMessage = WM_NOTIFYREGION;
 	notifyIcon.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_BIDTOW));
-	_tcscpy_s(notifyIcon.szTip, NELEMS(notifyIcon.szTip), _T("bidtow"));
+	_tcscpy_s(notifyIcon.szTip, NELEMS(notifyIcon.szTip), appClassName);
 
 	while(!Shell_NotifyIcon(dwMessage, &notifyIcon)) {
 		// Shell_NotifyIcon() can be timeout, so we should check icon has registered certainly.
@@ -60,18 +124,12 @@ static BOOL ManipulateIconOnTaskbar(DWORD dwMessage)
 	return TRUE;
 }
 
-//
-//
-//
-static BOOL AddIconToTaskbar(void)
+BOOL CMainDialog::AddIconToTaskbar(void)
 {
 	return ManipulateIconOnTaskbar(NIM_ADD);
 }
 
-//
-//
-//
-static BOOL RemoveIconFromTaskbar(void)
+BOOL CMainDialog::RemoveIconFromTaskbar(void)
 {
 	return ManipulateIconOnTaskbar(NIM_DELETE);
 }
@@ -79,29 +137,19 @@ static BOOL RemoveIconFromTaskbar(void)
 //
 //
 //
-static BOOL ShowBidtowWindow(void)
+BOOL CMainDialog::ShowBidtowWindow(void)
 {
-	ShowWindow(s_hMainDialog, SW_SHOW);
+	ShowWindow(SW_SHOW);
 	return RemoveIconFromTaskbar();
 }
 
 //
 //
 //
-static BOOL HideBidtowWindow(void)
+BOOL CMainDialog::HideBidtowWindow(void)
 {
-	ShowWindow(s_hMainDialog, SW_HIDE);
+	ShowWindow(SW_HIDE);
 	return AddIconToTaskbar();
-}
-
-//
-//
-//
-static void TerminateApplication(void)
-{
-	RemoveIconFromTaskbar();
-	DestroyWindow(s_hMainDialog);
-	PostQuitMessage(0);
 }
 
 //
@@ -123,88 +171,100 @@ void GetCurrentAvailableInputDevicesName()
 	}
 }
 
-//
-// 
-//
-static BOOL CALLBACK MainDialogProc(HWND hDialog, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 {
-	static HMENU hTrayMenuRoot, hTrayMenu;
-	switch(msg) {
-		case WM_INITDIALOG: {
-			HINSTANCE hInstance = GetModuleHandle(NULL);
-			HICON hAppIcon = (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_ICON_BIDTOW), IMAGE_ICON, 32, 32, 0);
-			if(hAppIcon) {
-				SendMessage(hDialog, WM_SETICON, ICON_SMALL, (LPARAM)hAppIcon);
-			}
+	CIcon appIcon;
 
-			hTrayMenuRoot = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU_TASKTRAY));
-			hTrayMenu = GetSubMenu(hTrayMenuRoot, 0);
+	appIcon.LoadIcon(IDI_ICON_BIDTOW);
+	this->SetIcon(appIcon);
 
-			return TRUE;
-		}
+	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
-		case WM_SYSCOMMAND: {
-			if(wParam == SC_CLOSE) {
-				//ShowWindow(s_hMainDialog, SW_MINIMIZE);
-				HideBidtowWindow();
-				return TRUE;
-			} else {
-				return FALSE;
-			}
-		}
+	return TRUE;
+}
 
-		case WM_COMMAND:
-			switch(LOWORD(wParam)) {
-			case IDOK:
-				break;
+void CMainDialog::OnClose(void)
+{
+	RemoveIconFromTaskbar();
+	DestroyWindow();
+	PostQuitMessage(0);
+}
 
-			case ID_BIND:
-				break;
+void CMainDialog::OnDestroy(void)
+{
+	RemoveIconFromTaskbar();
+	PostQuitMessage(0);
+}
 
-			case ID_CONFIG:
-				break;
+void CMainDialog::OnInput(WPARAM code, HRAWINPUT hRawInput)
+{
+	theManager.PassInputMessage(code, hRawInput);
+}
 
-			case ID_STATUS:
-				break;
+void CMainDialog::OnNotifyRegion(WPARAM wParam, LPARAM lParam)
+{
+	if(lParam == WM_LBUTTONDBLCLK) {
+		ShowBidtowWindow();
+	} else if(lParam == WM_RBUTTONUP) {
+		// show context menu
+		UINT flag = 0;
+		CMenu TrayMenu;
+		POINT pt;
 
-			case ID_ABOUT:
-				break;
+		GetCursorPos(&pt);
+		flag |= (pt.x < GetSystemMetrics(SM_CXSCREEN) / 2) ? TPM_LEFTALIGN : TPM_RIGHTALIGN;
+		flag |= (pt.y < GetSystemMetrics(SM_CYSCREEN) / 2) ? TPM_TOPALIGN : TPM_BOTTOMALIGN;
 
-			case ID_EXIT:
-				TerminateApplication();
-				break;
-			}
-			return TRUE;
-
-		case WM_CLOSE: {
-			TerminateApplication();
-			return TRUE;
-		}
-
-		case WM_NOTIFYREGION:
-			if(lParam == WM_LBUTTONDBLCLK) {
-				ShowBidtowWindow();
-			} else if(lParam == WM_RBUTTONUP) {
-				// show context menu
-				HINSTANCE hInstance = GetModuleHandle(NULL);
-				UINT flag = 0;
-				POINT pt;
-
-				GetCursorPos(&pt);
-				flag |= (pt.x < GetSystemMetrics(SM_CXSCREEN) / 2) ? TPM_LEFTALIGN : TPM_RIGHTALIGN;
-				flag |= (pt.y < GetSystemMetrics(SM_CYSCREEN) / 2) ? TPM_TOPALIGN : TPM_BOTTOMALIGN;
-				TrackPopupMenu(hTrayMenu, flag, pt.x, pt.y, 0, s_hMainDialog, NULL);
-			} else {
-				return FALSE;
-			}
-			return TRUE;
-
-		case WM_INPUT:
-			return theManager.PassInputMessage(hDialog, msg, wParam, lParam);
-
-		default:
-			return FALSE;
+		TrayMenu.LoadMenu(IDR_MENU_TASKTRAY);
+		TrayMenu.GetSubMenu(0).TrackPopupMenu(flag, pt.x, pt.y, this->m_hWnd);
 	}
+}
+
+LRESULT CMainDialog::OnTaskbarRestart(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	// taskbar recreated
+	// see also: http://www31.ocn.ne.jp/~yoshio2/vcmemo17-1.html
+	AddIconToTaskbar();
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnConfig(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnStatus(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnAbout(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnExit(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	RemoveIconFromTaskbar();
+	DestroyWindow();
+	PostQuitMessage(0);
+	return TRUE;
+}
+
+LRESULT CMainDialog::OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl)
+{
+	HideBidtowWindow();
+	return TRUE;
 }
 
 //
@@ -214,83 +274,40 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 {
 	switch(msg) {
 		case WM_CREATE:
-			s_TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 			break;
-
-		case WM_INPUT:
-			break;
-		case WM_DESTROY:
-			RemoveIconFromTaskbar();
-			PostQuitMessage(0);
-			break;
-
-		default:
-			if(msg == s_TaskbarRestartMessage) {
-				// taskbar recreated
-				// see also: http://www31.ocn.ne.jp/~yoshio2/vcmemo17-1.html
-				AddIconToTaskbar();
-			} else
-				return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
 	return 0L;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nShowCmd)
 {
-	WNDCLASSEX wndClass;
-	MSG msg;
 	RAWINPUTDEVICE devs[2];
+	CMainDialog dlg;
+	CMessageLoop theLoop;
 	BOOL bResult;
 
-	// register window class
-	ZeroMemory(&wndClass, sizeof(wndClass));
-	wndClass.cbSize = sizeof(wndClass);
-	wndClass.style = CS_HREDRAW | CS_VREDRAW;
-	wndClass.hInstance = hInstance;
-	wndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wndClass.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_ICON_BIDTOW));
-	wndClass.hCursor = LoadCursor(NULL, IDI_APPLICATION);
-	wndClass.lpszClassName = appClassName;
-	wndClass.lpfnWndProc = MainWndProc;
-	if(!RegisterClassEx(&wndClass)) {
-		return 0;
-	}
+	_Module.Init(NULL, hInstance);
 
-	// create dialog
-	s_hMainDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAINDIALOG), NULL, MainDialogProc);
-	if(!s_hMainDialog)
-		return 0;
-	if(!ShowBidtowWindow()) {
-		CloseWindow(s_hMainDialog);
-		return 0;
-	}
-	UpdateWindow(s_hMainDialog);
+	dlg.Create(NULL);
 
 	// hook keyboard and mouse control
 	ZeroMemory(devs, sizeof(devs));
-	devs[0].hwndTarget	= devs[1].hwndTarget	= s_hMainDialog;
+	devs[0].hwndTarget	= devs[1].hwndTarget	= dlg.m_hWnd;
 	devs[0].usUsagePage	= devs[1].usUsagePage	= 0x01;
 	devs[0].usUsage		= 0x02;	// Usage Page=1, Usage ID=2 -> mouse
 	devs[1].usUsage		= 0x06;	// Usage Page=1, Usage ID=6 -> keyboard
 	devs[0].dwFlags		= devs[1].dwFlags		= RIDEV_INPUTSINK;
 	bResult = RegisterRawInputDevices(devs, 2, sizeof(RAWINPUTDEVICE));
 	if(!bResult) {
-		RemoveIconFromTaskbar();
-		CloseWindow(s_hMainDialog);
 		return 0;
 	}
 
-	// message loop
-	while(true) {
-		BOOL ret = GetMessage(&msg, NULL, 0, 0);
-		if(ret == 0 || ret == -1) {
-			break;
-		} else if(s_hMainDialog == NULL || !IsDialogMessage(s_hMainDialog, &msg)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
+	dlg.ShowBidtowWindow();
 
-	return 0;
+	int ret = theLoop.Run();
+
+	_Module.RemoveMessageLoop();
+	_Module.Term();
+	return ret;
 }

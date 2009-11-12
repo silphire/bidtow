@@ -1,0 +1,5 @@
+1. Download WTL from http://sf.net/projects/wtl/
+2. Extract WTL archive.
+3. You will find directory named "Include" in the archive. Copy it to here.
+   Note that result of above, "Include" directory created on the current directory. 
+

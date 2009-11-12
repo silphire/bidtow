@@ -18,5 +18,5 @@ public:
 
 	bool IsBindedToWindow(HWND hWnd);
 	bool IsDeviceTypeOf(DWORD type);
-	BOOL ProcessMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	BOOL ProcessMessage(WPARAM code, HRAWINPUT hRawInput);
 };

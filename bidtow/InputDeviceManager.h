@@ -19,5 +19,5 @@ private:
 public:
 	InputDeviceManager(void);
 	~InputDeviceManager(void);
-	BOOL PassInputMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	BOOL PassInputMessage(WPARAM code, HRAWINPUT hRawInput);
 };

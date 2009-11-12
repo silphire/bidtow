@@ -52,7 +52,7 @@ bool InputDevice::IsDeviceTypeOf(DWORD type)
 	return type == deviceType;
 }
 
-BOOL InputDevice::ProcessMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+BOOL InputDevice::ProcessMessage(WPARAM code, HRAWINPUT hRawInput)
 {
 	return TRUE;
 }
