@@ -19,6 +19,8 @@
 
 #include "InputDeviceManager.h"
 #include "InputDevice.h"
+#include "StatusPage.h"
+#include "ConfigPage.h"
 
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
@@ -44,9 +46,10 @@
 
 CAppModule _Module;
 
-class CMainDialog : public CDialogImpl<CMainDialog> {
+//class CMainDialog : public CDialogImpl<CMainDialog> {
+class CMainDialog : public CPropertySheetImpl<CMainDialog> {
 public:
-	enum { IDD = IDD_MAINDIALOG };
+	// enum { IDD = IDD_MAINDIALOG };
 
 	BEGIN_MSG_MAP_EX(CMainDialog)
 		MSG_WM_INITDIALOG(OnInitDialog)
@@ -64,12 +67,17 @@ public:
 		SYSCOMMAND_ID_HANDLER_EX(SC_CLOSE, OnSysClose)
 	END_MSG_MAP()
 
+	CMainDialog(void);
+	virtual ~CMainDialog();
 	BOOL ShowBidtowWindow(void);
 	BOOL HideBidtowWindow(void);
 
 private:
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
+	StatusPage PropPageStatus;
+	ConfigPage PropPageConfig;
+
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
 	BOOL AddIconToTaskbar(void);
 	BOOL RemoveIconFromTaskbar(void);
@@ -92,6 +100,17 @@ protected:
 
 const TCHAR *appClassName = _T("bidtow");
 static InputDeviceManager theManager;
+
+CMainDialog::CMainDialog(void)
+{
+	AddPage(PropPageStatus);
+	AddPage(PropPageConfig);
+}
+
+CMainDialog::~CMainDialog()
+{
+}
+
 
 BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
 {
@@ -265,19 +284,6 @@ LRESULT CMainDialog::OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
 	HideBidtowWindow();
 	return TRUE;
-}
-
-//
-// window procedure for message loop dispatched at WinMain()
-//
-static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch(msg) {
-		case WM_CREATE:
-			break;
-	}
-
-	return 0L;
 }
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nShowCmd)
