@@ -1,7 +1,9 @@
 /wtl/Include/
 Debug/
 Release/
-bidtow.ncb
-bidtow.suo
+*.ncb
+*.suo
+*.pdb
+*.aps
 *.user
 
