@@ -191,10 +191,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\StatusPage.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -234,10 +230,6 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StatusPage.h"
 				>
 			</File>
 			<File

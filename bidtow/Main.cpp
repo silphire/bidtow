@@ -19,8 +19,6 @@
 
 #include "InputDeviceManager.h"
 #include "InputDevice.h"
-#include "StatusPage.h"
-#include "ConfigPage.h"
 
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
@@ -46,10 +44,9 @@
 
 CAppModule _Module;
 
-//class CMainDialog : public CDialogImpl<CMainDialog> {
-class CMainDialog : public CPropertySheetImpl<CMainDialog> {
+class CMainDialog : public CDialogImpl<CMainDialog> {
 public:
-	// enum { IDD = IDD_MAINDIALOG };
+	enum { IDD = IDD_MAINDIALOG };
 
 	BEGIN_MSG_MAP_EX(CMainDialog)
 		MSG_WM_INITDIALOG(OnInitDialog)
@@ -75,8 +72,6 @@ public:
 private:
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
-	StatusPage PropPageStatus;
-	ConfigPage PropPageConfig;
 
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
 	BOOL AddIconToTaskbar(void);
@@ -103,8 +98,6 @@ static InputDeviceManager theManager;
 
 CMainDialog::CMainDialog(void)
 {
-	AddPage(PropPageStatus);
-	AddPage(PropPageConfig);
 }
 
 CMainDialog::~CMainDialog()
@@ -159,7 +152,7 @@ BOOL CMainDialog::RemoveIconFromTaskbar(void)
 BOOL CMainDialog::ShowBidtowWindow(void)
 {
 	ShowWindow(SW_SHOW);
-	return RemoveIconFromTaskbar();
+	return TRUE;
 }
 
 //
@@ -168,7 +161,7 @@ BOOL CMainDialog::ShowBidtowWindow(void)
 BOOL CMainDialog::HideBidtowWindow(void)
 {
 	ShowWindow(SW_HIDE);
-	return AddIconToTaskbar();
+	return TRUE;
 }
 
 //
@@ -196,11 +189,14 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 
 	appIcon.LoadIcon(IDI_ICON_BIDTOW);
 	this->SetIcon(appIcon);
+	if(!AddIconToTaskbar())
+		return FALSE;
 
 	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
 	return TRUE;
 }
+
 
 void CMainDialog::OnClose(void)
 {
@@ -252,6 +248,9 @@ LRESULT CMainDialog::OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl)
 	return TRUE;
 }
 
+//
+// start binding window with input device
+//
 LRESULT CMainDialog::OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
 	return TRUE;
@@ -272,6 +271,9 @@ LRESULT CMainDialog::OnAbout(UINT uNotifyCode, int nID, HWND hWndCtrl)
 	return TRUE;
 }
 
+//
+// "Exit" on the tasktray menu
+//
 LRESULT CMainDialog::OnExit(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
 	RemoveIconFromTaskbar();

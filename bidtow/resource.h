@@ -5,7 +5,6 @@
 #define IDI_ICON_BIDTOW                 102
 #define IDD_MAINDIALOG                  103
 #define IDR_MENU_TASKTRAY               104
-#define IDD_STATUS_PAGE                 107
 #define IDD_PROPPAGE_LARGE              108
 #define IDD_CONFIG_PAGE                 108
 #define ID_40001                        40001
