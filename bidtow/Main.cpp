@@ -328,6 +328,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	BOOL bResult;
 
 	_Module.Init(NULL, hInstance);
+	_Module.AddMessageLoop(&theLoop);
 
 	dlg.Create(NULL);
 
