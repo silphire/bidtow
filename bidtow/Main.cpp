@@ -22,7 +22,7 @@
 
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
-#define WM_NOTIFYREGION (WM_USER + 1)
+#define WM_NOTIFYREGION (WM_APP + 1)
 #define MSG_WM_NOTIFYREGION(func) \
 	if(uMsg == WM_NOTIFYREGION) { \
 		SetMsgHandled(TRUE); \
