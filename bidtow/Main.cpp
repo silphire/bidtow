@@ -70,14 +70,16 @@ public:
 	BOOL HideBidtowWindow(void);
 
 private:
+	static const UINT IconID;		// task tray icon's ID
+
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
 
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
+	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon);
 	BOOL AddIconToTaskbar(void);
 	BOOL RemoveIconFromTaskbar(void);
-	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title, UINT timeOut);
-	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon);
+	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title);
 
 protected:
 	LRESULT OnInitDialog(HWND hWnd, LPARAM lParam);
@@ -94,6 +96,8 @@ protected:
 	LRESULT OnExit(UINT uNotifyCode, int nID, HWND hWndCtrl);
 	LRESULT OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl);
 };
+
+const UINT CMainDialog::IconID = 1;
 
 const TCHAR *appClassName = _T("bidtow");
 static InputDeviceManager theManager;
@@ -114,8 +118,10 @@ BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
 
 	// append icon to notification region
 	ZeroMemory(&notifyIcon, sizeof(notifyIcon));
-	notifyIcon.cbSize = sizeof(notifyIcon);
+	notifyIcon.cbSize = NOTIFYICONDATA_V2_SIZE;
 	notifyIcon.hWnd = this->m_hWnd;
+	notifyIcon.uID = CMainDialog::IconID;
+	notifyIcon.uVersion = NOTIFYICON_VERSION;
 	notifyIcon.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	notifyIcon.uCallbackMessage = WM_NOTIFYREGION;
 	notifyIcon.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_BIDTOW));
@@ -145,7 +151,10 @@ BOOL CMainDialog::RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyI
 
 BOOL CMainDialog::AddIconToTaskbar(void)
 {
-	return ManipulateIconOnTaskbar(NIM_ADD);
+	BOOL ret = TRUE;
+	ret = ret && ManipulateIconOnTaskbar(NIM_SETVERSION);
+	ret = ret && ManipulateIconOnTaskbar(NIM_ADD);
+	return ret;
 }
 
 BOOL CMainDialog::RemoveIconFromTaskbar(void)
@@ -153,20 +162,20 @@ BOOL CMainDialog::RemoveIconFromTaskbar(void)
 	return ManipulateIconOnTaskbar(NIM_DELETE);
 }
 
-BOOL CMainDialog::ShowBalloon(const TCHAR *msg, const TCHAR *title, UINT timeOut)
+BOOL CMainDialog::ShowBalloon(const TCHAR *msg, const TCHAR *title)
 {
 	NOTIFYICONDATA notifyIcon;
 
 	::ZeroMemory(&notifyIcon, sizeof(notifyIcon));
-	notifyIcon.cbSize = sizeof(notifyIcon);
+	notifyIcon.cbSize = NOTIFYICONDATA_V2_SIZE;
 	notifyIcon.hWnd = this->m_hWnd;
+	notifyIcon.uID = CMainDialog::IconID;
 	notifyIcon.uFlags = NIF_INFO;
-	notifyIcon.uTimeout = timeOut;
+	notifyIcon.dwInfoFlags = NIIF_INFO;
 	_tcscpy_s(notifyIcon.szInfo, NELEMS(notifyIcon.szInfo), msg);
 	_tcscpy_s(notifyIcon.szInfoTitle, NELEMS(notifyIcon.szInfoTitle), title);
 	return RegisterIconOnTaskbar(NIM_MODIFY, &notifyIcon);
 }
-
 
 //
 //
