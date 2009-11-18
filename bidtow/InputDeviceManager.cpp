@@ -35,3 +35,15 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	delete[] buffer;
 	return ret;
 }
+
+void InputDeviceManager::StartBind(void)
+{
+}
+
+void InputDeviceManager::SelectWindow(void)
+{
+}
+
+void InputDeviceManager::SelectKeyboard(void)
+{
+}

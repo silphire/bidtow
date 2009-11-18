@@ -76,6 +76,8 @@ private:
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
 	BOOL AddIconToTaskbar(void);
 	BOOL RemoveIconFromTaskbar(void);
+	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title, UINT timeOut);
+	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon);
 
 protected:
 	LRESULT OnInitDialog(HWND hWnd, LPARAM lParam);
@@ -119,13 +121,18 @@ BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
 	notifyIcon.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON_BIDTOW));
 	_tcscpy_s(notifyIcon.szTip, NELEMS(notifyIcon.szTip), appClassName);
 
-	while(!Shell_NotifyIcon(dwMessage, &notifyIcon)) {
+	return RegisterIconOnTaskbar(dwMessage, &notifyIcon);
+}
+
+BOOL CMainDialog::RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon)
+{
+	while(!Shell_NotifyIcon(dwMessage, notifyIcon)) {
 		// Shell_NotifyIcon() can be timeout, so we should check icon has registered certainly.
 		// see also: http://support.microsoft.com/kb/418138/
 		DWORD err = GetLastError();
 		if(err == ERROR_TIMEOUT) {
 			Sleep(100);
-			if(Shell_NotifyIcon(NIM_MODIFY, &notifyIcon))
+			if(Shell_NotifyIcon(NIM_MODIFY, notifyIcon))
 				break;
 		} else {
 			// something error occured, but not processed specially.
@@ -145,6 +152,21 @@ BOOL CMainDialog::RemoveIconFromTaskbar(void)
 {
 	return ManipulateIconOnTaskbar(NIM_DELETE);
 }
+
+BOOL CMainDialog::ShowBalloon(const TCHAR *msg, const TCHAR *title, UINT timeOut)
+{
+	NOTIFYICONDATA notifyIcon;
+
+	::ZeroMemory(&notifyIcon, sizeof(notifyIcon));
+	notifyIcon.cbSize = sizeof(notifyIcon);
+	notifyIcon.hWnd = this->m_hWnd;
+	notifyIcon.uFlags = NIF_INFO;
+	notifyIcon.uTimeout = timeOut;
+	_tcscpy_s(notifyIcon.szInfo, NELEMS(notifyIcon.szInfo), msg);
+	_tcscpy_s(notifyIcon.szInfoTitle, NELEMS(notifyIcon.szInfoTitle), title);
+	return RegisterIconOnTaskbar(NIM_MODIFY, &notifyIcon);
+}
+
 
 //
 //
@@ -253,6 +275,7 @@ LRESULT CMainDialog::OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl)
 //
 LRESULT CMainDialog::OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
+	theManager.StartBind();
 	return TRUE;
 }
 

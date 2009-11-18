@@ -7,7 +7,6 @@
 // ・特定のデバイスのウィンドウへの登録手順を示す
 //
 
-#include <windows.h>
 #include <vector>
 #include <set>
 #include "InputDevice.h"
@@ -19,5 +18,9 @@ private:
 public:
 	InputDeviceManager(void);
 	~InputDeviceManager(void);
+	void StartBind(void);
+	void SelectWindow(void);
+	void SelectKeyboard(void);
+
 	BOOL PassInputMessage(WPARAM code, HRAWINPUT hRawInput);
 };
