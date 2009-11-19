@@ -1,4 +1,5 @@
 #include "InputDeviceManager.h"
+#include "BalloonNotifier.h"
 #include <windows.h>
 
 InputDeviceManager::InputDeviceManager(void)
@@ -36,8 +37,11 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	return ret;
 }
 
-void InputDeviceManager::StartBind(void)
+void InputDeviceManager::StartBind(BalloonNotifier *notifier)
 {
+	notifier->ShowBalloon(
+		_T("Select window using mouse you want to bind with"), 
+		_T("bidtow - mouse selection"));
 }
 
 void InputDeviceManager::SelectWindow(void)

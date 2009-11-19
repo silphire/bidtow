@@ -19,6 +19,7 @@
 
 #include "InputDeviceManager.h"
 #include "InputDevice.h"
+#include "BalloonNotifier.h"
 
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
@@ -44,7 +45,9 @@
 
 CAppModule _Module;
 
-class CMainDialog : public CDialogImpl<CMainDialog> {
+class CMainDialog : 
+	public CDialogImpl<CMainDialog>, 
+	public BalloonNotifier {
 public:
 	enum { IDD = IDD_MAINDIALOG };
 
@@ -75,11 +78,11 @@ private:
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
 
-	BOOL ManipulateIconOnTaskbar(DWORD dwMessage);
-	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon);
-	BOOL AddIconToTaskbar(void);
-	BOOL RemoveIconFromTaskbar(void);
-	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title);
+	BOOL ManipulateIconOnTaskbar(DWORD dwMessage) const;
+	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon) const;
+	BOOL AddIconToTaskbar(void) const;
+	BOOL RemoveIconFromTaskbar(void) const;
+	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title) const;
 
 protected:
 	LRESULT OnInitDialog(HWND hWnd, LPARAM lParam);
@@ -111,7 +114,7 @@ CMainDialog::~CMainDialog()
 }
 
 
-BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
+BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage) const
 {
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	NOTIFYICONDATA notifyIcon;
@@ -130,7 +133,7 @@ BOOL CMainDialog::ManipulateIconOnTaskbar(DWORD dwMessage)
 	return RegisterIconOnTaskbar(dwMessage, &notifyIcon);
 }
 
-BOOL CMainDialog::RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon)
+BOOL CMainDialog::RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon) const
 {
 	while(!Shell_NotifyIcon(dwMessage, notifyIcon)) {
 		// Shell_NotifyIcon() can be timeout, so we should check icon has registered certainly.
@@ -149,7 +152,7 @@ BOOL CMainDialog::RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyI
 	return TRUE;
 }
 
-BOOL CMainDialog::AddIconToTaskbar(void)
+BOOL CMainDialog::AddIconToTaskbar(void) const
 {
 	BOOL ret = TRUE;
 	ret = ret && ManipulateIconOnTaskbar(NIM_SETVERSION);
@@ -157,12 +160,12 @@ BOOL CMainDialog::AddIconToTaskbar(void)
 	return ret;
 }
 
-BOOL CMainDialog::RemoveIconFromTaskbar(void)
+BOOL CMainDialog::RemoveIconFromTaskbar(void) const
 {
 	return ManipulateIconOnTaskbar(NIM_DELETE);
 }
 
-BOOL CMainDialog::ShowBalloon(const TCHAR *msg, const TCHAR *title)
+BOOL CMainDialog::ShowBalloon(const TCHAR *msg, const TCHAR *title) const
 {
 	NOTIFYICONDATA notifyIcon;
 
@@ -284,7 +287,7 @@ LRESULT CMainDialog::OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl)
 //
 LRESULT CMainDialog::OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
-	theManager.StartBind();
+	theManager.StartBind(this);
 	return TRUE;
 }
 

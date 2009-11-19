@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include "InputDevice.h"
+#include "BalloonNotifier.h"
 
 class InputDeviceManager
 {
@@ -18,7 +19,7 @@ private:
 public:
 	InputDeviceManager(void);
 	~InputDeviceManager(void);
-	void StartBind(void);
+	void StartBind(BalloonNotifier *notifier);
 	void SelectWindow(void);
 	void SelectKeyboard(void);
 
