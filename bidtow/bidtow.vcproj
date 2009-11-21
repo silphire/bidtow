@@ -191,7 +191,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Keyboard.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Main.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Mouse.cpp"
 				>
 			</File>
 			<File
@@ -234,6 +242,14 @@
 			</File>
 			<File
 				RelativePath=".\InputDeviceManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Keyboard.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Mouse.h"
 				>
 			</File>
 			<File
