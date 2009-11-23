@@ -40,11 +40,42 @@ void InputDevice::Init(const RAWINPUT *raw)
 		guid = p;
 
 	delete[] devname;
+
+	// get device description
+	ATL::CRegKey key;
+	WTL::CString keyName;
+	keyName.Format(_T("System\\CurrentControlSet\\Enum\\%s\\%s\\%s"), classCode, subClassCode, protocolCode);
+	if(key.Open(HKEY_LOCAL_MACHINE, keyName) == ERROR_SUCCESS) {
+		TCHAR *buf = NULL;
+		ULONG len, reqlen = 0x100;
+		LONG result;
+		
+		do {
+			len = reqlen;
+			buf = new TCHAR[len];
+			result = key.QueryStringValue(_T("DeviceDesc"), buf, &len);
+			if(result == ERROR_MORE_DATA) {
+				reqlen *= 2;
+				delete[] buf;
+			}
+		} while(result == ERROR_MORE_DATA);
+
+		if(result == ERROR_SUCCESS) {
+			description.AssignCopy(len, buf);
+		}
+
+		delete[] buf;
+	}
 }
 
 WTL::CString InputDevice::GetGUID(void) const
 {
 	return guid;
+}
+
+WTL::CString InputDevice::GetName(void) const
+{
+	return description;
 }
 
 DWORD InputDevice::GetDeviceType(void) const

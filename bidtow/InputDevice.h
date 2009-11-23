@@ -12,11 +12,13 @@ protected:
 	WTL::CString subClassCode;
 	WTL::CString protocolCode;
 	WTL::CString guid;
+	WTL::CString description;
 public:
 	InputDevice(const RAWINPUT *raw = NULL, HWND hWnd = NULL);
 	virtual ~InputDevice(void);
 
 	WTL::CString GetGUID() const;
+	WTL::CString GetName(void) const;
 	DWORD GetDeviceType(void) const;
 
 	void Bind(HWND hWnd);
