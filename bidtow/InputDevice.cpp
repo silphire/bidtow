@@ -61,7 +61,7 @@ void InputDevice::Init(const RAWINPUT *raw)
 		} while(result == ERROR_MORE_DATA);
 
 		if(result == ERROR_SUCCESS) {
-			description.AssignCopy(len, buf);
+			description = buf;
 		}
 
 		delete[] buf;
@@ -81,6 +81,12 @@ WTL::CString InputDevice::GetName(void) const
 DWORD InputDevice::GetDeviceType(void) const
 {
 	return deviceType;
+}
+
+
+HWND InputDevice::GetBindedHWND(void) const 
+{
+	return hBindedWnd;
 }
 
 void InputDevice::Bind(HWND hWnd)

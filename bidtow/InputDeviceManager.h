@@ -24,10 +24,10 @@ private:
 	enum BindingSelectionState bindingSelectionState;
 	BalloonNotifier *notifier;
 	HWND selectingHWND;
-protected:
-	std::vector<InputDevice *> devices;
 
 public:
+	std::vector<InputDevice *> devices;
+
 	InputDeviceManager(void);
 	virtual ~InputDeviceManager(void);
 

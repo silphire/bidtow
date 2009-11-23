@@ -15,6 +15,8 @@
 #include <windows.h>
 #include <tchar.h>
 #include <vector>
+#include <map>
+#include <atlstr.h>
 #include "resource.h"
 
 #include "InputDeviceManager.h"
@@ -24,6 +26,10 @@
 #define NELEMS(x) (sizeof(x) / sizeof(x[0]))
 
 #define WM_NOTIFYREGION (WM_APP + 1)
+#define LIST_INDEX_WINDOW	0
+#define LIST_INDEX_MOUSE	1
+#define LIST_INDEX_KEYBOARD	2
+
 #define MSG_WM_NOTIFYREGION(func) \
 	if(uMsg == WM_NOTIFYREGION) { \
 		SetMsgHandled(TRUE); \
@@ -84,6 +90,7 @@ private:
 	BOOL AddIconToTaskbar(void) const;
 	BOOL RemoveIconFromTaskbar(void) const;
 	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title) const;
+	void DisplayBindedInputDevices(void);
 
 protected:
 	CListViewCtrl listCtrl;
@@ -106,6 +113,12 @@ protected:
 const UINT CMainDialog::IconID = 1;
 
 const TCHAR *appClassName = _T("bidtow");
+
+struct BindedDevices {
+	HWND hWnd; 
+	InputDevice *keyboard;
+	InputDevice *mouse;
+};
 
 CMainDialog::CMainDialog(void)
 {
@@ -222,6 +235,7 @@ void GetCurrentAvailableInputDevicesName()
 LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 {
 	CIcon appIcon;
+	CRect rect;
 
 	appIcon.LoadIcon(IDI_ICON_BIDTOW);
 	this->SetIcon(appIcon);
@@ -231,6 +245,9 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
 	listCtrl = GetDlgItem(IDC_LIST_BINDED);
+	listCtrl.InsertColumn(LIST_INDEX_WINDOW, _T("Window"), LVCFMT_LEFT, 100, -1);
+	listCtrl.InsertColumn(LIST_INDEX_MOUSE, _T("Mouse"), LVCFMT_LEFT, 100, -1);
+	listCtrl.InsertColumn(LIST_INDEX_KEYBOARD, _T("Keyboard"), LVCFMT_LEFT, 100, -1);
 
 	theManager = new InputDeviceManager();
 	theManager->RegisterNotifier(this);
@@ -330,6 +347,45 @@ LRESULT CMainDialog::OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl)
 	HideBidtowWindow();
 	return TRUE;
 }
+
+void CMainDialog::DisplayBindedInputDevices(void)
+{
+	int i;
+	std::map<HWND, BindedDevices> binded;
+
+	for(std::vector<InputDevice *>::iterator it = theManager->devices.begin(); it != theManager->devices.end(); ++it) {
+		HWND hWnd = (*it)->GetBindedHWND();
+		WTL::CString name = (*it)->GetName();
+
+		if(binded.find(hWnd) == binded.end()) {
+			BindedDevices dev;
+			::ZeroMemory(&dev, sizeof(BindedDevices));
+			dev.hWnd = hWnd;
+			binded.insert(std::pair<HWND, BindedDevices>(hWnd, dev));
+		} else {
+			if((*it)->GetDeviceType() == RIM_TYPEMOUSE) {
+				binded[hWnd].mouse = *it;
+			} else if((*it)->GetDeviceType() == RIM_TYPEKEYBOARD) {
+				binded[hWnd].keyboard = *it;
+			}
+		}
+	}
+
+	i = 0;
+	for(std::map<HWND, BindedDevices>::iterator it = binded.begin(); it != binded.end(); ++it) {
+		if(it->first != NULL) {
+			ATL::CString title;
+			CWindow(it->first).GetWindowText(title);
+			listCtrl.AddItem(i, LIST_INDEX_WINDOW, title);
+		}
+		if(it->second.mouse != NULL)
+			listCtrl.AddItem(i, LIST_INDEX_MOUSE, it->second.mouse->GetName());
+		if(it->second.keyboard != NULL)
+			listCtrl.AddItem(i, LIST_INDEX_KEYBOARD, it->second.keyboard->GetName());
+		++i;
+	}
+}
+
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nShowCmd)
 {

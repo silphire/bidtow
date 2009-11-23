@@ -20,6 +20,7 @@ public:
 	WTL::CString GetGUID() const;
 	WTL::CString GetName(void) const;
 	DWORD GetDeviceType(void) const;
+	HWND GetBindedHWND(void) const;
 
 	void Bind(HWND hWnd);
 	void UnBind(void);
