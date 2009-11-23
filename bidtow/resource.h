@@ -7,6 +7,8 @@
 #define IDR_MENU_TASKTRAY               104
 #define IDD_PROPPAGE_LARGE              108
 #define IDD_CONFIG_PAGE                 108
+#define IDC_LIST1                       1002
+#define IDC_LIST_BINDED                 1002
 #define ID_40001                        40001
 #define ID_40002                        40002
 #define ID_40003                        40003
@@ -24,7 +26,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40011
-#define _APS_NEXT_CONTROL_VALUE         1002
+#define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

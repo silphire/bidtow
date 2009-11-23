@@ -86,6 +86,8 @@ private:
 	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title) const;
 
 protected:
+	CListViewCtrl listCtrl;
+
 	LRESULT OnInitDialog(HWND hWnd, LPARAM lParam);
 	void OnClose(void);
 	void OnDestroy(void);
@@ -227,6 +229,8 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 		return FALSE;
 
 	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
+
+	listCtrl = GetDlgItem(IDC_LIST_BINDED);
 
 	theManager = new InputDeviceManager();
 	theManager->RegisterNotifier(this);
