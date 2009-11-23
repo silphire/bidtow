@@ -42,22 +42,9 @@ void InputDevice::Init(const RAWINPUT *raw)
 	delete[] devname;
 }
 
-WTL::CString InputDevice::GetName(void) const
+WTL::CString InputDevice::GetGUID(void) const
 {
-	WTL::CString name;
-	char *buf;
-	UINT len = 0;
-
-	if(hDevice == NULL)
-		return name;
-
-	GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, NULL, &len);
-	buf = new char[len];
-	GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, buf, &len);
-	name = buf;
-	delete[] buf;
-
-	return buf;
+	return guid;
 }
 
 DWORD InputDevice::GetDeviceType(void) const

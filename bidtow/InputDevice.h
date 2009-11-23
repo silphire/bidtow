@@ -16,7 +16,7 @@ public:
 	InputDevice(const RAWINPUT *raw = NULL, HWND hWnd = NULL);
 	virtual ~InputDevice(void);
 
-	WTL::CString GetName() const;
+	WTL::CString GetGUID() const;
 	DWORD GetDeviceType(void) const;
 
 	void Bind(HWND hWnd);
