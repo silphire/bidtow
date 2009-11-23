@@ -1,20 +1,41 @@
 #include "InputDeviceManager.h"
 #include "BalloonNotifier.h"
+#include "Mouse.h"
+#include "Keyboard.h"
 #include <windows.h>
 
 InputDeviceManager::InputDeviceManager(void)
 {
+	bindingSelectionState = NotSelecting;
 }
 
 InputDeviceManager::~InputDeviceManager(void)
 {
 }
 
+void InputDeviceManager::RegisterNotifier(BalloonNotifier *obj)
+{
+	notifier = obj;
+}
+
+bool InputDeviceManager::InitDevices(HWND hWnd)
+{
+	RAWINPUTDEVICE devs[2];
+
+	ZeroMemory(devs, sizeof(devs));
+	devs[0].hwndTarget	= devs[1].hwndTarget	= hWnd;
+	devs[0].usUsagePage	= devs[1].usUsagePage	= 0x01;
+	devs[0].usUsage		= 0x02;	// Usage Page=1, Usage ID=2 -> mouse
+	devs[1].usUsage		= 0x06;	// Usage Page=1, Usage ID=6 -> keyboard
+	devs[0].dwFlags		= devs[1].dwFlags		= RIDEV_INPUTSINK;
+
+	return RegisterRawInputDevices(devs, 2, sizeof(RAWINPUTDEVICE)) == TRUE;
+}
+
 BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 {
-	std::vector<InputDevice>::iterator it;
+	std::vector<InputDevice *>::iterator it;
 	BOOL ret = TRUE;
-	HWND hWnd;		// handle of window which mouse indicating
 	
 	BYTE *buffer = NULL;
 	RAWINPUT *raw = (RAWINPUT *)buffer;
@@ -27,27 +48,81 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	dwGetSize = GetRawInputData(hRawInput, RID_INPUT, buffer, &dwSize, sizeof(RAWINPUTHEADER));
 	//ASSERT(dwGetSize == dwSize);
 
-	for(it = devices.begin(); it != devices.end(); ++it) {
-		if(it->IsBindedToWindow(hWnd) && it->IsDeviceTypeOf(raw->header.dwType)) {
-			ret = ret && it->ProcessMessage(code, hRawInput);
-		}
+	switch(bindingSelectionState) {
+		case NotSelecting:
+			for(it = devices.begin(); it != devices.end(); ++it) {
+				if((*it)->IsDeviceTypeOf(raw->header.dwType)) {
+					ret = ret && (*it)->ProcessMessage(code, raw);
+				}
+			}
+
+			break;
+		case SelectingMouse:
+			if(raw->header.dwType == RIM_TYPEMOUSE) {
+				SelectWindow(raw);
+			}
+			break;
+		case SelectingKeyboard:
+			if(raw->header.dwType == RIM_TYPEKEYBOARD) {
+				SelectKeyboard(raw);
+			}
+			break;
 	}
 
 	delete[] buffer;
 	return ret;
 }
 
-void InputDeviceManager::StartBind(BalloonNotifier *notifier)
+void InputDeviceManager::StartBind(void)
 {
-	notifier->ShowBalloon(
-		_T("Select window using mouse you want to bind with"), 
-		_T("bidtow - mouse selection"));
+	if(bindingSelectionState == NotSelecting) {
+		notifier->ShowBalloon(
+			_T("Select window using mouse you want to bind with"), 
+			_T("bidtow - mouse selection"));
+		bindingSelectionState = SelectingMouse;
+	} else {
+		notifier->ShowBalloon(
+			_T("Previous binding has not completed"), 
+			_T("bidtow"));
+	}
 }
 
-void InputDeviceManager::SelectWindow(void)
+void InputDeviceManager::SelectWindow(const RAWINPUT *raw)
 {
+	POINT pt;
+	HWND hWnd;
+
+	// return unless left button clicked
+	if(!(raw->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN)) 
+		return;
+
+	pt.x = raw->data.mouse.lLastX;
+	pt.y = raw->data.mouse.lLastY;
+	hWnd = WindowFromPoint(pt);
+	if(hWnd == NULL) {
+		notifier->ShowBalloon(
+			_T("Select aborted"), 
+			_T("bidtow"));
+		bindingSelectionState = NotSelecting;
+	} else {
+		devices.push_back(new Mouse(raw, hWnd));
+
+		notifier->ShowBalloon(
+			_T("Select keyboard to bind to selecting window"), 
+			_T("bidtow - keyboard selection"));
+		bindingSelectionState = SelectingKeyboard;
+		selectingHWND = hWnd;
+	}
 }
 
-void InputDeviceManager::SelectKeyboard(void)
+void InputDeviceManager::SelectKeyboard(const RAWINPUT *raw)
 {
+	if(raw->data.keyboard.VKey == VK_RETURN) {
+		devices.push_back(new Keyboard(raw, selectingHWND));
+		notifier->ShowBalloon(
+			_T("Successfully binded"), 
+			_T("bidtow - binding finished"));
+	}
+
+	bindingSelectionState = NotSelecting;
 }

@@ -3,7 +3,7 @@
 class Mouse : public InputDevice
 {
 public:
-	Mouse(void);
+	Mouse(const RAWINPUT *raw, HWND hWnd);
 	virtual ~Mouse(void);
 };
 

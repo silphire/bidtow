@@ -1,6 +1,5 @@
 #pragma once
 #include <windows.h>
-#include <string>
 
 class InputDevice
 {
@@ -8,15 +7,23 @@ protected:
 	HWND hBindedWnd;
 	HANDLE hDevice;
 	DWORD deviceType;
-public:
-	InputDevice(void);
-	~InputDevice(void);
 
-	std::string GetName();
+	WTL::CString classCode;
+	WTL::CString subClassCode;
+	WTL::CString protocolCode;
+	WTL::CString guid;
+public:
+	InputDevice(const RAWINPUT *raw = NULL, HWND hWnd = NULL);
+	virtual ~InputDevice(void);
+
+	WTL::CString GetName() const;
+	DWORD GetDeviceType(void) const;
+
 	void Bind(HWND hWnd);
 	void UnBind(void);
 
-	bool IsBindedToWindow(HWND hWnd);
-	bool IsDeviceTypeOf(DWORD type);
-	BOOL ProcessMessage(WPARAM code, HRAWINPUT hRawInput);
+	bool IsBindedToWindow(HWND hWnd) const;
+	bool IsDeviceTypeOf(DWORD type) const;
+	virtual void Init(const RAWINPUT *raw);
+	virtual BOOL ProcessMessage(WPARAM code, RAWINPUT *rawInput);
 };

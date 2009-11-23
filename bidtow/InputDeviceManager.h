@@ -15,13 +15,28 @@
 class InputDeviceManager
 {
 private:
-	std::vector<InputDevice> devices;
+	enum BindingSelectionState {
+		NotSelecting, 
+		SelectingMouse, 
+		SelectingKeyboard, 
+	};
+
+	enum BindingSelectionState bindingSelectionState;
+	BalloonNotifier *notifier;
+	HWND selectingHWND;
+protected:
+	std::vector<InputDevice *> devices;
+
 public:
 	InputDeviceManager(void);
-	~InputDeviceManager(void);
-	void StartBind(BalloonNotifier *notifier);
-	void SelectWindow(void);
-	void SelectKeyboard(void);
+	virtual ~InputDeviceManager(void);
+
+	void RegisterNotifier(BalloonNotifier *obj);
+	bool InitDevices(HWND hWnd);
+
+	void StartBind(void);
+	void SelectWindow(const RAWINPUT *raw);
+	void SelectKeyboard(const RAWINPUT *raw);
 
 	BOOL PassInputMessage(WPARAM code, HRAWINPUT hRawInput);
 };

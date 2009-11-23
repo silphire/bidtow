@@ -4,7 +4,7 @@
 class Keyboard : public InputDevice
 {
 public:
-	Keyboard(void);
+	Keyboard(const RAWINPUT *raw, HWND hWnd);
 	virtual ~Keyboard(void);
 };
 

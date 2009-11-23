@@ -1,6 +1,6 @@
 #include "Mouse.h"
 
-Mouse::Mouse(void)
+Mouse::Mouse(const RAWINPUT *raw, HWND hWnd)
 {
 }
 

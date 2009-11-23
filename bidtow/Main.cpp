@@ -77,6 +77,7 @@ private:
 
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
+	InputDeviceManager *theManager;
 
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage) const;
 	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon) const;
@@ -103,7 +104,6 @@ protected:
 const UINT CMainDialog::IconID = 1;
 
 const TCHAR *appClassName = _T("bidtow");
-static InputDeviceManager theManager;
 
 CMainDialog::CMainDialog(void)
 {
@@ -228,6 +228,10 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 
 	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
+	theManager = new InputDeviceManager();
+	theManager->RegisterNotifier(this);
+	theManager->InitDevices(this->m_hWnd);
+
 	return TRUE;
 }
 
@@ -247,7 +251,7 @@ void CMainDialog::OnDestroy(void)
 
 void CMainDialog::OnInput(WPARAM code, HRAWINPUT hRawInput)
 {
-	theManager.PassInputMessage(code, hRawInput);
+	theManager->PassInputMessage(code, hRawInput);
 }
 
 void CMainDialog::OnNotifyRegion(WPARAM wParam, LPARAM lParam)
@@ -287,7 +291,7 @@ LRESULT CMainDialog::OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl)
 //
 LRESULT CMainDialog::OnBind(UINT uNotifyCode, int nID, HWND hWndCtrl)
 {
-	theManager.StartBind(this);
+	theManager->StartBind();
 	return TRUE;
 }
 
@@ -325,28 +329,13 @@ LRESULT CMainDialog::OnSysClose(UINT uNotifyCode, int nID, HWND hWndCtrl)
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nShowCmd)
 {
-	RAWINPUTDEVICE devs[2];
 	CMainDialog dlg;
 	CMessageLoop theLoop;
-	BOOL bResult;
 
 	_Module.Init(NULL, hInstance);
 	_Module.AddMessageLoop(&theLoop);
 
 	dlg.Create(NULL);
-
-	// hook keyboard and mouse control
-	ZeroMemory(devs, sizeof(devs));
-	devs[0].hwndTarget	= devs[1].hwndTarget	= dlg.m_hWnd;
-	devs[0].usUsagePage	= devs[1].usUsagePage	= 0x01;
-	devs[0].usUsage		= 0x02;	// Usage Page=1, Usage ID=2 -> mouse
-	devs[1].usUsage		= 0x06;	// Usage Page=1, Usage ID=6 -> keyboard
-	devs[0].dwFlags		= devs[1].dwFlags		= RIDEV_INPUTSINK;
-	bResult = RegisterRawInputDevices(devs, 2, sizeof(RAWINPUTDEVICE));
-	if(!bResult) {
-		return 0;
-	}
-
 	dlg.ShowBidtowWindow();
 
 	int ret = theLoop.Run();

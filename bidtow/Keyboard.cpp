@@ -1,6 +1,6 @@
 #include "Keyboard.h"
 
-Keyboard::Keyboard(void)
+Keyboard::Keyboard(const RAWINPUT *raw, HWND hWnd)
 {
 }
 
