@@ -229,25 +229,6 @@ BOOL CMainDialog::HideBidtowWindow(void)
 	return TRUE;
 }
 
-//
-//
-//
-void GetCurrentAvailableInputDevicesName()
-{
-	RAWINPUTDEVICELIST *devices;
-	UINT i, nDevice;
-
-	GetRawInputDeviceList(NULL, &nDevice, sizeof(RAWINPUTDEVICELIST));
-	devices = new RAWINPUTDEVICELIST[nDevice];
-	GetRawInputDeviceList(devices, &nDevice, sizeof(RAWINPUTDEVICELIST));
-
-	for(i = 0; i < nDevice; ++i) {
-		if(devices[i].dwType == RIM_TYPEKEYBOARD || devices[i].dwType == RIM_TYPEMOUSE) {
-			InputDevice *devobj = new InputDevice();
-		}
-	}
-}
-
 LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 {
 	CIcon appIcon;
@@ -272,17 +253,7 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 	theManager->RegisterNotifier(this);
 	theManager->InitDevices(this->m_hWnd);
 
-	// WM_INPUT_DEVICE was appeared at Windows Vista. 
-	// if we are running on Windows XP or older, 
-	// we use WM_TIMER instead of WM_INPUT_DEVICE_CHANGE. 
-	OSVERSIONINFO verinfo;
-
-	::ZeroMemory(&verinfo, sizeof(verinfo));
-	verinfo.dwOSVersionInfoSize = sizeof(verinfo);
-	GetVersionEx(&verinfo);
-	if(verinfo.dwMajorVersion < 6) {		// Windows Vista = 6.0
-		timerID = ::SetTimer(NULL, 0, 5000, NULL);
-	}
+	timerID = ::SetTimer(NULL, 0, 5000, NULL);
 
 	return TRUE;
 }
@@ -310,12 +281,20 @@ void CMainDialog::OnInput(WPARAM code, HRAWINPUT hRawInput)
 
 void CMainDialog::OnInputDeviceChange(WPARAM wParam, HANDLE hDevice)
 {
+	if(wParam == GIDC_REMOVAL) {
+		theManager->RemoveDevice(hDevice);
+	}
 	DisplayBindedInputDevices();
 }
 
 void CMainDialog::OnTimer(UINT_PTR id)
 {
-	DisplayBindedInputDevices();
+	bool isChanged = false;
+	isChanged = isChanged || theManager->CheckDeviceRemoval();
+	isChanged = isChanged || theManager->CheckWindowClose();
+	if(isChanged) {
+		DisplayBindedInputDevices();
+	}
 }
 
 void CMainDialog::OnNotifyRegion(WPARAM wParam, LPARAM lParam)

@@ -34,6 +34,10 @@ public:
 	void RegisterNotifier(BalloonNotifier *obj);
 	bool InitDevices(HWND hWnd);
 
+	bool CheckDeviceRemoval(void);
+	bool CheckWindowClose(void);
+	void RemoveDevice(HANDLE hDevice);
+
 	void StartBind(void);
 	void SelectWindow(const RAWINPUT *raw);
 	void SelectKeyboard(const RAWINPUT *raw);

@@ -73,6 +73,70 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	return ret;
 }
 
+bool InputDeviceManager::CheckDeviceRemoval(void)
+{
+	bool isChanged = false;
+	std::vector<InputDevice *>::iterator it;
+	RAWINPUTDEVICELIST *availDevs;
+	UINT i, nDevices;
+
+	GetRawInputDeviceList(NULL, &nDevices, sizeof(RAWINPUTDEVICELIST));
+	availDevs = new RAWINPUTDEVICELIST[nDevices];
+	GetRawInputDeviceList(availDevs, &nDevices, sizeof(RAWINPUTDEVICELIST));
+
+	for(it = devices.begin(); it != devices.end(); ++it) {
+		bool isMissing = true;
+
+		for(i = 0; i < nDevices; ++i) {
+			if(availDevs[i].hDevice == (*it)->GetBindedHWND()) {
+				isMissing = false;
+				break;
+			}
+		}
+
+		if(isMissing) {
+			InputDevice *dev = *it;
+			it = devices.erase(it);
+			delete dev;
+		}
+	}
+
+	delete[] availDevs;
+
+	return isChanged;
+}
+
+bool InputDeviceManager::CheckWindowClose(void)
+{
+	bool isChanged = false;
+	std::vector<InputDevice *>::iterator it;
+
+	for(it = devices.begin(); it != devices.end(); ++it) {
+		InputDevice *dev = *it;
+		HWND hWnd = dev->GetBindedHWND();
+		if(hWnd != NULL && !::IsWindow(hWnd)) {
+			it = devices.erase(it);
+			delete dev;
+			isChanged = true;
+		}
+	}
+
+	return isChanged;
+}
+
+void InputDeviceManager::RemoveDevice(HANDLE hDevice)
+{
+	std::vector<InputDevice *>::iterator it;
+	
+	for(it = devices.begin(); it != devices.end(); ++it) {
+		InputDevice *dev = *it;
+		if(hDevice == dev->GetBindedHWND()) {
+			it = devices.erase(it);
+			delete dev;
+		}
+	}
+}
+
 void InputDeviceManager::StartBind(void)
 {
 	if(bindingSelectionState == NotSelecting) {
