@@ -38,7 +38,7 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	BOOL ret = TRUE;
 	
 	BYTE *buffer = NULL;
-	RAWINPUT *raw = (RAWINPUT *)buffer;
+	RAWINPUT *raw;
 	UINT dwSize, dwGetSize;
 
 	GetRawInputData(hRawInput, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
@@ -46,7 +46,8 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 	if(buffer == NULL)
 		return FALSE;
 	dwGetSize = GetRawInputData(hRawInput, RID_INPUT, buffer, &dwSize, sizeof(RAWINPUTHEADER));
-	//ASSERT(dwGetSize == dwSize);
+	ATLASSERT(dwGetSize == dwSize);
+	raw = (RAWINPUT *)buffer;
 
 	switch(bindingSelectionState) {
 		case NotSelecting:

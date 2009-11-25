@@ -24,7 +24,10 @@ void InputDevice::Init(const RAWINPUT *raw)
 
 	GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, NULL, &size);
 	devname = new TCHAR[size];
-	GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, &devname, &size);
+	if(GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, devname, &size) < 0) {
+		delete[] devname;
+		return;
+	}
 
 	p = _tcstok_s(devname, _T("#"), &context);
 	if(p != NULL)
@@ -44,8 +47,8 @@ void InputDevice::Init(const RAWINPUT *raw)
 	// get device description
 	ATL::CRegKey key;
 	WTL::CString keyName;
-	keyName.Format(_T("System\\CurrentControlSet\\Enum\\%s\\%s\\%s"), classCode, subClassCode, protocolCode);
-	if(key.Open(HKEY_LOCAL_MACHINE, keyName) == ERROR_SUCCESS) {
+	keyName.Format(_T("SYSTEM\\CurrentControlSet\\Enum\\%s\\%s\\%s"), classCode, subClassCode, protocolCode);
+	if(key.Open(HKEY_LOCAL_MACHINE, keyName, KEY_READ) == ERROR_SUCCESS) {
 		TCHAR *buf = NULL;
 		ULONG len, reqlen = 0x100;
 		LONG result;
