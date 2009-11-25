@@ -89,6 +89,7 @@ public:
 	virtual ~CMainDialog();
 	BOOL ShowBidtowWindow(void);
 	BOOL HideBidtowWindow(void);
+	virtual void DisplayBindedInputDevices(void);
 
 private:
 	static const UINT IconID;		// task tray icon's ID
@@ -103,7 +104,6 @@ private:
 	BOOL AddIconToTaskbar(void) const;
 	BOOL RemoveIconFromTaskbar(void) const;
 	BOOL ShowBalloon(const TCHAR *msg, const TCHAR *title) const;
-	void DisplayBindedInputDevices(void);
 
 protected:
 	CListViewCtrl listCtrl;

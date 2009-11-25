@@ -189,5 +189,6 @@ void InputDeviceManager::SelectKeyboard(const RAWINPUT *raw)
 			_T("bidtow - binding finished"));
 	}
 
+	notifier->DisplayBindedInputDevices();
 	bindingSelectionState = NotSelecting;
 }
