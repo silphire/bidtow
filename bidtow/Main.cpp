@@ -30,6 +30,16 @@
 #define LIST_INDEX_MOUSE	1
 #define LIST_INDEX_KEYBOARD	2
 
+#define MSG_WM_INPUT_DEVICE_CHANGE(func) \
+	if (uMsg == WM_INPUT_DEVICE_CHANGE) \
+	{ \
+		SetMsgHandled(TRUE); \
+		func(wParam, (HANDLE)lParam); \
+		lResult = 0; \
+		if(IsMsgHandled()) \
+			return TRUE; \
+	}
+
 #define MSG_WM_NOTIFYREGION(func) \
 	if(uMsg == WM_NOTIFYREGION) { \
 		SetMsgHandled(TRUE); \
@@ -62,6 +72,7 @@ public:
 		MSG_WM_CLOSE(OnClose)
 		MSG_WM_DESTROY(OnDestroy)
 		MSG_WM_INPUT(OnInput)
+		MSG_WM_INPUT_DEVICE_CHANGE(OnInputDeviceChange)
 		MSG_WM_NOTIFYREGION(OnNotifyRegion)
 		MESSAGE_HANDLER_EX(TaskbarRestartMessage, OnTaskbarRestart)
 		COMMAND_ID_HANDLER_EX(IDOK, OnOK)
@@ -99,6 +110,7 @@ protected:
 	void OnClose(void);
 	void OnDestroy(void);
 	void OnInput(WPARAM code, HRAWINPUT hRawInput);
+	void OnInputDeviceChange(WPARAM wParam, HANDLE hDevice);
 	void OnNotifyRegion(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTaskbarRestart(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl);
@@ -273,6 +285,10 @@ void CMainDialog::OnDestroy(void)
 void CMainDialog::OnInput(WPARAM code, HRAWINPUT hRawInput)
 {
 	theManager->PassInputMessage(code, hRawInput);
+}
+
+void CMainDialog::OnInputDeviceChange(WPARAM wParam, HANDLE hDevice)
+{
 }
 
 void CMainDialog::OnNotifyRegion(WPARAM wParam, LPARAM lParam)
