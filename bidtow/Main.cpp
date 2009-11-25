@@ -384,12 +384,12 @@ void CMainDialog::DisplayBindedInputDevices(void)
 			::ZeroMemory(&dev, sizeof(BindedDevices));
 			dev.hWnd = hWnd;
 			binded.insert(std::pair<HWND, BindedDevices>(hWnd, dev));
-		} else {
-			if((*it)->GetDeviceType() == RIM_TYPEMOUSE) {
-				binded[hWnd].mouse = *it;
-			} else if((*it)->GetDeviceType() == RIM_TYPEKEYBOARD) {
-				binded[hWnd].keyboard = *it;
-			}
+		}
+
+		if((*it)->GetDeviceType() == RIM_TYPEMOUSE) {
+			binded[hWnd].mouse = *it;
+		} else if((*it)->GetDeviceType() == RIM_TYPEKEYBOARD) {
+			binded[hWnd].keyboard = *it;
 		}
 	}
 
