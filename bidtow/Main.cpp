@@ -73,6 +73,7 @@ public:
 		MSG_WM_DESTROY(OnDestroy)
 		MSG_WM_INPUT(OnInput)
 		MSG_WM_INPUT_DEVICE_CHANGE(OnInputDeviceChange)
+		MSG_WM_TIMER(OnTimer)
 		MSG_WM_NOTIFYREGION(OnNotifyRegion)
 		MESSAGE_HANDLER_EX(TaskbarRestartMessage, OnTaskbarRestart)
 		COMMAND_ID_HANDLER_EX(IDOK, OnOK)
@@ -95,6 +96,7 @@ private:
 	UINT TaskbarRestartMessage;
 	CMenu TrayMenu;
 	InputDeviceManager *theManager;
+	UINT_PTR timerID;
 
 	BOOL ManipulateIconOnTaskbar(DWORD dwMessage) const;
 	BOOL RegisterIconOnTaskbar(DWORD dwMessage, NOTIFYICONDATA *notifyIcon) const;
@@ -111,6 +113,7 @@ protected:
 	void OnDestroy(void);
 	void OnInput(WPARAM code, HRAWINPUT hRawInput);
 	void OnInputDeviceChange(WPARAM wParam, HANDLE hDevice);
+	void OnTimer(UINT_PTR id);
 	void OnNotifyRegion(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTaskbarRestart(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnOK(UINT uNotifyCode, int nID, HWND hWndCtrl);
@@ -134,6 +137,7 @@ struct BindedDevices {
 
 CMainDialog::CMainDialog(void)
 {
+	timerID = 0;
 }
 
 CMainDialog::~CMainDialog()
@@ -249,6 +253,7 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 	CIcon appIcon;
 	CRect rect;
 
+	// register icon to taskbar
 	appIcon.LoadIcon(IDI_ICON_BIDTOW);
 	this->SetIcon(appIcon);
 	if(!AddIconToTaskbar())
@@ -256,14 +261,28 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 
 	TaskbarRestartMessage = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
+	// initialize dialog items
 	listCtrl = GetDlgItem(IDC_LIST_BINDED);
 	listCtrl.InsertColumn(LIST_INDEX_WINDOW, _T("Window"), LVCFMT_LEFT, 100, -1);
 	listCtrl.InsertColumn(LIST_INDEX_MOUSE, _T("Mouse"), LVCFMT_LEFT, 100, -1);
 	listCtrl.InsertColumn(LIST_INDEX_KEYBOARD, _T("Keyboard"), LVCFMT_LEFT, 100, -1);
 
+	// launch input device manager
 	theManager = new InputDeviceManager();
 	theManager->RegisterNotifier(this);
 	theManager->InitDevices(this->m_hWnd);
+
+	// WM_INPUT_DEVICE was appeared at Windows Vista. 
+	// if we are running on Windows XP or older, 
+	// we use WM_TIMER instead of WM_INPUT_DEVICE_CHANGE. 
+	OSVERSIONINFO verinfo;
+
+	::ZeroMemory(&verinfo, sizeof(verinfo));
+	verinfo.dwOSVersionInfoSize = sizeof(verinfo);
+	GetVersionEx(&verinfo);
+	if(verinfo.dwMajorVersion < 6) {		// Windows Vista = 6.0
+		timerID = ::SetTimer(NULL, 0, 5000, NULL);
+	}
 
 	return TRUE;
 }
@@ -273,12 +292,14 @@ void CMainDialog::OnClose(void)
 {
 	RemoveIconFromTaskbar();
 	DestroyWindow();
+	::KillTimer(NULL, timerID);
 	PostQuitMessage(0);
 }
 
 void CMainDialog::OnDestroy(void)
 {
 	RemoveIconFromTaskbar();
+	::KillTimer(NULL, timerID);
 	PostQuitMessage(0);
 }
 
@@ -289,6 +310,12 @@ void CMainDialog::OnInput(WPARAM code, HRAWINPUT hRawInput)
 
 void CMainDialog::OnInputDeviceChange(WPARAM wParam, HANDLE hDevice)
 {
+	DisplayBindedInputDevices();
+}
+
+void CMainDialog::OnTimer(UINT_PTR id)
+{
+	DisplayBindedInputDevices();
 }
 
 void CMainDialog::OnNotifyRegion(WPARAM wParam, LPARAM lParam)
