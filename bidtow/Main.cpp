@@ -375,7 +375,7 @@ void CMainDialog::DisplayBindedInputDevices(void)
 	int i;
 	std::map<HWND, BindedDevices> binded;
 
-	for(std::vector<InputDevice *>::iterator it = theManager->devices.begin(); it != theManager->devices.end(); ++it) {
+	for(std::vector<InputDevice *>::const_iterator it = theManager->devices.begin(); it != theManager->devices.end(); ++it) {
 		HWND hWnd = (*it)->GetBindedHWND();
 		WTL::CString name = (*it)->GetName();
 
@@ -394,7 +394,7 @@ void CMainDialog::DisplayBindedInputDevices(void)
 	}
 
 	i = 0;
-	for(std::map<HWND, BindedDevices>::iterator it = binded.begin(); it != binded.end(); ++it) {
+	for(std::map<HWND, BindedDevices>::const_iterator it = binded.begin(); it != binded.end(); ++it) {
 		if(it->first != NULL) {
 			ATL::CString title;
 			CWindow(it->first).GetWindowText(title);

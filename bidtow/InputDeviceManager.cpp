@@ -34,7 +34,7 @@ bool InputDeviceManager::InitDevices(HWND hWnd)
 
 BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 {
-	std::vector<InputDevice *>::iterator it;
+	std::vector<InputDevice *>::const_iterator it;
 	BOOL ret = TRUE;
 	
 	BYTE *buffer = NULL;
@@ -77,7 +77,7 @@ BOOL InputDeviceManager::PassInputMessage(WPARAM code, HRAWINPUT hRawInput)
 bool InputDeviceManager::CheckDeviceRemoval(void)
 {
 	bool isChanged = false;
-	std::vector<InputDevice *>::iterator it;
+	std::vector<InputDevice *>::const_iterator it;
 	RAWINPUTDEVICELIST *availDevs;
 	UINT i, nDevices;
 
@@ -110,7 +110,7 @@ bool InputDeviceManager::CheckDeviceRemoval(void)
 bool InputDeviceManager::CheckWindowClose(void)
 {
 	bool isChanged = false;
-	std::vector<InputDevice *>::iterator it;
+	std::vector<InputDevice *>::const_iterator it;
 
 	for(it = devices.begin(); it != devices.end(); ++it) {
 		InputDevice *dev = *it;
@@ -127,7 +127,7 @@ bool InputDeviceManager::CheckWindowClose(void)
 
 void InputDeviceManager::RemoveDevice(HANDLE hDevice)
 {
-	std::vector<InputDevice *>::iterator it;
+	std::vector<InputDevice *>::const_iterator it;
 	
 	for(it = devices.begin(); it != devices.end(); ++it) {
 		InputDevice *dev = *it;
