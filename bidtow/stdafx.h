@@ -8,3 +8,4 @@ extern CAppModule _Module;
 #include <atlmisc.h>
 #include <atldlgs.h>
 #include <atlctrls.h>
+#include <atlframe.h>

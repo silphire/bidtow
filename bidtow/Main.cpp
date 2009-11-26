@@ -63,6 +63,7 @@ CAppModule _Module;
 
 class CMainDialog : 
 	public CDialogImpl<CMainDialog>, 
+	public CDialogResize<CMainDialog>, 
 	public BalloonNotifier {
 public:
 	enum { IDD = IDD_MAINDIALOG };
@@ -83,7 +84,12 @@ public:
 		COMMAND_ID_HANDLER_EX(ID_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER_EX(ID_EXIT, OnExit)
 		SYSCOMMAND_ID_HANDLER_EX(SC_CLOSE, OnSysClose)
+		CHAIN_MSG_MAP(CDialogResize<CMainDialog>)
 	END_MSG_MAP()
+
+	BEGIN_DLGRESIZE_MAP(CMainDialog)
+		DLGRESIZE_CONTROL(IDC_LIST_BINDED, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+	END_DLGRESIZE_MAP()
 
 	CMainDialog(void);
 	virtual ~CMainDialog();
@@ -254,6 +260,8 @@ LRESULT CMainDialog::OnInitDialog(HWND hWnd, LPARAM lParam)
 	theManager->InitDevices(this->m_hWnd);
 
 	timerID = ::SetTimer(NULL, 0, 5000, NULL);
+
+	DlgResize_Init(true, true, WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN);
 
 	return TRUE;
 }
