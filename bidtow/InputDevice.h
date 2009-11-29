@@ -28,5 +28,5 @@ public:
 	bool IsBindedToWindow(HWND hWnd) const;
 	bool IsDeviceTypeOf(DWORD type) const;
 	virtual void Init(const RAWINPUT *raw);
-	virtual BOOL ProcessMessage(WPARAM code, RAWINPUT *rawInput);
+	virtual BOOL ProcessMessage(WPARAM code, const RAWINPUT *rawInput);
 };

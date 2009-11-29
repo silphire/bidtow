@@ -12,7 +12,7 @@ void Keyboard::Init(const RAWINPUT *raw)
 {
 }
 
-BOOL Keyboard::ProcessMessage(WPARAM code, RAWINPUT *rawInput)
+BOOL Keyboard::ProcessMessage(WPARAM code, const RAWINPUT *rawInput)
 {
 	return InputDevice::ProcessMessage(code, rawInput);
 }

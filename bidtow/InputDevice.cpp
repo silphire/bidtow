@@ -116,7 +116,7 @@ bool InputDevice::IsDeviceTypeOf(DWORD type) const
 	return type == deviceType;
 }
 
-BOOL InputDevice::ProcessMessage(WPARAM code, RAWINPUT *rawInput)
+BOOL InputDevice::ProcessMessage(WPARAM code, const RAWINPUT *rawInput)
 {
 	return TRUE;
 }
