@@ -14,5 +14,6 @@ void Keyboard::Init(const RAWINPUT *raw)
 
 BOOL Keyboard::ProcessMessage(WPARAM code, const RAWINPUT *rawInput)
 {
+	const RAWKEYBOARD *keyboard = &rawInput->data.keyboard;
 	return InputDevice::ProcessMessage(code, rawInput);
 }
